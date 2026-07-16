@@ -1,0 +1,12 @@
+{:itonami.blueprint/id "cloud-itonami-8292"
+ :itonami.blueprint/name "Packaging Activities"
+ :itonami.blueprint/isic-rev5 "8292"
+ :itonami.blueprint/domain :business-support/contract-packaging
+ :itonami.blueprint/license "AGPL-3.0-or-later"
+ :itonami.blueprint/social-impact [:package-integrity :labeling-accuracy :consumer-safety :supply-chain-transparency]
+ :itonami.blueprint/governor :contract-packaging-governor
+ :itonami.blueprint/robotics true
+ :itonami.blueprint/required-technologies [:robotics :identity :forms :dmn :bpmn :audit-ledger]
+ :itonami.blueprint/optional-technologies []
+ :itonami.blueprint/status :public-oss
+ :itonami.blueprint/maturity :implemented}
