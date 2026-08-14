@@ -266,16 +266,26 @@
 (defn- attribution
   "MEASURES this repo's store, rather than assuming a fleet-wide defect.
   Compares the approvals the graph actually granted against what the
-  committed records and the audit ledger retained."
+  committed records and the audit ledger retained.
+
+  `:value-blind-count` measures a SECOND, independent question that the
+  headline status cannot express: even when a record keeps the approver,
+  is that approver reachable from the record's `:value` -- the key a
+  consumer would naturally read, and the only one `commit-record`
+  guarantees is populated (`(or (:value proposal) {})`)? A record whose
+  approver lives solely on a sibling key is retained but effectively
+  invisible, which is a different failure from losing it outright."
   [db threads]
   (let [granted   (approvals-granted threads)
         records   (vec (store/coordination-log db))
         attributed (filterv approver-in records)
+        value-blind (filterv #(and (approver-in %) (nil? (approver-in (:value %)))) records)
         ledger-approvals (filterv #(= :approval-granted (:t %)) (store/ledger db))]
     {:granted-count    (count granted)
      :record-count     (count records)
      :attributed-count (count attributed)
      :attributed-keys  (vec (distinct (map (comp str :key approver-in) attributed)))
+     :value-blind-count (count value-blind)
      :ledger-approval-count (count ledger-approvals)
      :status (cond
                (zero? (count granted))          :no-approval-path
@@ -379,9 +389,28 @@
            (str/join " " (map #(str "<code class=\"bad\">" (esc %) "</code>") basis))
            "<span class=\"muted\">—</span>"))))
 
+(defn- governor-hard-holds
+  "Ledger facts held by a HARD ContractPackagingGovernor violation.
+
+  A phase-gate hold is written with the SAME `:t :governor-hold` tag but
+  carries NO `:violations` -- it is a rollout decision that disappears
+  the moment the phase advances, whereas every fact returned here is
+  permanent and un-overridable by any human approval. Counting the two
+  together would overstate how much of the governor this run actually
+  exercised, so they are separated at the source rather than in prose."
+  [db]
+  (filter #(and (= :governor-hold (:t %)) (seq (:violations %))) (store/ledger db)))
+
+(defn- phase-gate-holds
+  "Ledger holds produced by the rollout phase gate on a governor-CLEAN
+  proposal (`:violations` empty, `:phase-reason` set)."
+  [db]
+  (filter #(and (= :governor-hold (:t %)) (empty? (:violations %))) (store/ledger db)))
+
 (defn- hold-rule-rows
-  "Groups the run's HARD holds by the governor rule that fired, with the
-  governor's OWN detail string for each."
+  "Groups the run's holds by the rule that fired, with the governor's OWN
+  detail string for each, labelling whether each rule is a permanent
+  HARD block or a phase-gate decision."
   [db]
   (let [holds (filter #(= :governor-hold (:t %)) (store/ledger db))
         by-rule (reduce (fn [acc f]
@@ -389,14 +418,15 @@
                             (reduce (fn [a v]
                                       (update a (name (:rule v))
                                               (fnil conj [])
-                                              {:detail (:detail v) :op (:op f)
+                                              {:kind :hard
+                                               :detail (:detail v) :op (:op f)
                                                :facility-id (:facility-id f)
                                                :contract-id (:contract-id f)}))
                                     acc (:violations f))
-                            (update acc (str (name (or (:phase-reason f) :unclassified))
-                                             " (phase gate)")
+                            (update acc (name (or (:phase-reason f) :unclassified))
                                     (fnil conj [])
-                                    {:detail (str "phase " (:phase f) " ("
+                                    {:kind :phase
+                                     :detail (str "phase " (:phase f) " ("
                                                   (:label (get phase/phases (:phase f)))
                                                   ") はこの操作の書き込みをまだ開放していない")
                                      :op (:op f)
@@ -405,6 +435,9 @@
                         (sorted-map) holds)]
     (for [[rule occurrences] by-rule]
       (row (str "<code class=\"bad\">" (esc rule) "</code>")
+           (if (= :hard (:kind (first occurrences)))
+             (pill "bad" "HARD · 上書き不可")
+             (pill "warn" "phase gate · phase 前進で解除"))
            (str (count occurrences))
            (esc (str/join ", " (distinct (map (comp str :op) occurrences))))
            (esc (str/join " / " (distinct (map :detail occurrences))))))))
@@ -424,15 +457,33 @@
            "<span class=\"muted\">—</span>")
          (esc (or (:summary f) "")))))
 
-(defn- commit-rows [db]
-  (for [r (store/coordination-log db)
-        :let [a (approver-in r)]]
-    (row (kw (:op r))
-         (esc (str (:facility-id r) " / " (:contract-id r)))
-         (esc (fmt-map (:value r)))
-         (if a
-           (str (pill "ok" (esc (str (:value a)))) " <code>" (esc (:key a)) "</code>")
-           "<span class=\"muted\">承認なし (自動コミット)</span>"))))
+(defn- commit-rows
+  "One row per committed SSoT record.
+
+  The approver cell is read from the run's MEASURED attribution status
+  rather than inferred from the absence of a key. An empty approver cell
+  may mean two entirely different things -- nobody ever approved this
+  record, or somebody did and the store failed to keep it -- and only
+  the measurement can tell them apart. So the confident label
+  `承認なし (自動コミット)` is printed ONLY when this run demonstrated
+  that every approval the graph granted survived into a record. When
+  attribution is lossy or partial, the same empty cell is reported as
+  unknowable instead, because in that run it genuinely is."
+  [db att]
+  (let [decidable? (contains? #{:record-retains-approver :no-approval-path} (:status att))]
+    (for [r (store/coordination-log db)
+          :let [a (approver-in r)]]
+      (row (kw (:op r))
+           (esc (str (:facility-id r) " / " (:contract-id r)))
+           (esc (fmt-map (:value r)))
+           (cond
+             a (str (pill "ok" (esc (str (:value a)))) " <code>" (esc (:key a)) "</code>"
+                    (when (nil? (approver-in (:value r)))
+                      (str " <span class=\"muted\">(<code>:value</code> 側には無い)</span>")))
+             decidable? "<span class=\"muted\">承認なし (自動コミット)</span>"
+             :else (str (pill "warn" "判別不能")
+                        " <span class=\"muted\">この実行では承認者の保持が不完全なため、"
+                        "自動コミットだったのか承認者が失われたのかをレコードから区別できない</span>"))))))
 
 (defn- contract-rows
   "Derived from the governor/phase vars themselves, so this table cannot
@@ -455,7 +506,7 @@
 
 (defn- attribution-section [att]
   (let [{:keys [status granted-count attributed-count record-count
-                attributed-keys ledger-approval-count]} att]
+                attributed-keys value-blind-count ledger-approval-count]} att]
     (str "  <section class=\"card\">\n"
          "    <h2>承認者の帰属 (この実行で実測)</h2>\n"
          "    <p class=\"lede\">この節は固定文ではない — レンダリング時に、コミット済みレコードを"
@@ -471,6 +522,7 @@
                  (if (seq attributed-keys)
                    (str/join ", " (map #(str "<code>" (esc %) "</code>") attributed-keys))
                    "<span class=\"muted\">なし</span>"))
+            (row "うち <code>:value</code> からは辿れないレコード" (str value-blind-count))
             (row "監査台帳に残った <code>:approval-granted</code> ファクト" (str ledger-approval-count))])
          "\n      </tbody>\n"
          "    </table>\n"
@@ -482,6 +534,16 @@
                 granted-count " 件の承認すべてについて、コミット済みレコードから「誰が承認したか」を答えられる"
                 "(<code>commit-record!</code> がレコード全体を保持しており、"
                 (str/join "/" attributed-keys) " がそのまま残る)。"
+                (when (pos? value-blind-count)
+                  (str " ただしその " value-blind-count
+                       " 件すべてで、承認者はレコードの <code>:payload</code> にしか無い — "
+                       "<code>:value</code> は同じ形をしていながら承認者を含まない。"
+                       "<code>commit-record</code> は <code>:value</code> を "
+                       "<code>(or (:value proposal) {})</code> で常に埋める一方、承認者は "
+                       "<code>:request-approval</code> ノードが <code>:payload</code> 側にだけ "
+                       "<code>assoc</code> するため、<code>:value</code> だけを読む利用者は"
+                       "承認済みレコードを未承認と誤読する。上の表の承認者列がこの走査に依存しており、"
+                       "<code>:value</code> を直接読んでいないのはそのため。"))
                 (if (zero? ledger-approval-count)
                   (str " ただし追記専用の監査台帳には <code>:approval-granted</code> ファクトが 1 件も書かれていない — "
                        "承認の事実は <code>packagingops.operation</code> のグラフ状態には存在するが、"
@@ -551,7 +613,8 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:var(--muted);fon
   (let [led (store/ledger db)]
     [["調整リクエスト" (count threads)]
      ["コミット" (count (filter #(= :committed (:t %)) led))]
-     ["HARD hold" (count (filter #(= :governor-hold (:t %)) led))]
+     ["HARD hold (governor)" (count (governor-hard-holds db))]
+     ["phase gate hold" (count (phase-gate-holds db))]
      ["人間の却下" (count (filter #(= :approval-rejected (:t %)) led))]
      ["SSoT レコード" (count (store/coordination-log db))]
      ["台帳ファクト" (count led)]]))
@@ -583,10 +646,12 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:var(--muted);fon
               ["thread" "シナリオ" "op" "施設 / 契約" "phase" "confidence" "人間の判断" "disposition" "hold の根拠"]
               (run-rows threads))
 
-     (section "HARD hold の内訳 (この実行で実際に発火した規則)"
-              (str "HARD hold は人間承認で上書きできない。detail 列は ContractPackagingGovernor 自身が"
-                   "返した文字列をそのまま表示している。")
-              ["規則" "件数" "op" "governor の detail"]
+     (section "hold の内訳 (この実行で実際に発火した規則)"
+              (str "HARD hold は ContractPackagingGovernor の永久ブロックで、人間承認でも上書きできない。"
+                   "phase gate hold は governor が clean と判定した提案を rollout phase が止めたもので、"
+                   "phase を前進させれば解除される — 台帳上はどちらも <code>:governor-hold</code> だが、"
+                   "<code>:violations</code> の有無で区別している。detail 列は governor 自身が返した文字列。")
+              ["規則" "種別" "件数" "op" "governor の detail"]
               (hold-rule-rows db))
 
      (directory-section "包装施設ディレクトリ"
@@ -609,7 +674,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:var(--muted);fon
               (str "<code>commit</code> ノードだけが書き込む。承認者列は、レコードを"
                    "承認者キーについて走査した実測結果 (下の節を参照)。")
               ["op" "施設 / 契約" "value" "承認者"]
-              (commit-rows db))
+              (commit-rows db att))
 
      (section "監査台帳 (追記専用)"
               "この実行が生成した全ての決定ファクト。commit も hold も却下も同じ台帳に残る。"
@@ -632,27 +697,37 @@ footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:var(--muted);fon
      "</footer>\n</body></html>\n")))
 
 (defn -main [& args]
-  (let [out (or (first args) "docs/samples/operator-console.html")
+  (let [out    (or (first args) "docs/samples/operator-console.html")
         result (run-demo!)
-        led (store/ledger (:db result))
-        holds (filter #(= :governor-hold (:t %)) led)]
+        db     (:db result)
+        led    (store/ledger db)
+        hard   (governor-hard-holds db)
+        phase-held (phase-gate-holds db)
+        hard-rules (distinct (mapcat #(map (comp name :rule) (:violations %)) hard))]
     ;; Build-time invariant, not a convention: a console that shows no
     ;; HARD hold has not exercised the ContractPackagingGovernor, and is
     ;; therefore not evidence that the governance layer works. Refuse to
     ;; write it.
-    (when (empty? holds)
+    ;;
+    ;; This deliberately counts only holds carrying `:violations`. A
+    ;; phase-gate hold shares the `:t :governor-hold` tag but proves
+    ;; nothing about the governor -- accepting one here would let a
+    ;; scenario that never trips a single compliance rule still satisfy
+    ;; the invariant, which is exactly the silence this check exists to
+    ;; prevent.
+    (when (empty? hard)
       (throw (ex-info (str "refusing to write " out
-                           ": the scenario produced ZERO :governor-hold facts, so the page "
+                           ": the scenario produced ZERO HARD governor holds "
+                           "(:governor-hold facts carrying :violations), so the page "
                            "would not demonstrate a single enforced governor rule")
-                      {:ledger-facts (count led)
-                       :governor-holds 0})))
+                      {:ledger-facts    (count led)
+                       :hard-holds      0
+                       :phase-gate-holds (count phase-held)})))
     (io/make-parents out)
     (spit out (render result))
     (println "wrote" out
              (str "(" (count led) " ledger facts, "
-                  (count holds) " HARD holds, "
-                  (count (distinct (mapcat #(or (seq (map name (:basis %)))
-                                                [(name (or (:phase-reason %) :unclassified))])
-                                           holds)))
-                  " distinct hold rules, "
-                  (count (store/coordination-log (:db result))) " committed records)"))))
+                  (count hard) " HARD governor holds over "
+                  (count hard-rules) " distinct rules " (vec (sort hard-rules)) ", "
+                  (count phase-held) " phase-gate holds, "
+                  (count (store/coordination-log db)) " committed records)"))))
