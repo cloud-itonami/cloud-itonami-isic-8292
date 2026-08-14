@@ -28,11 +28,17 @@
   store is freshly seeded on every run. Two consecutive renders are
   byte-identical.
 
-  Styling: self-contained inline CSS. `jp-go-dds` is deliberately NOT
-  used here -- it is not a dependency of this repo, and adding one would
-  make an offline `clojure -M:dev:render-html` depend on dependency
-  resolution it does not currently need. The page is plain semantic HTML
-  with a small stylesheet.
+  Styling: self-contained inline CSS carrying ONLY the `jp-go-dds`
+  (デジタル庁デザインシステム) primitives this page actually references,
+  with their real values read from the local checkout
+  `orgs/kotoba-lang/jp-go-digital-design-system`. The git dep is
+  deliberately NOT added -- it would make an offline
+  `clojure -M:dev:render-html` depend on dependency resolution this repo
+  does not otherwise need, and the pinned `tokens/bridge-css` bridges the
+  `--hig-*` contract rather than the token names used here, so wiring it
+  naively would silently unstyle the page. See the `css` var for the
+  primitive->page-semantic mapping and for why error tints come from the
+  `-50` step rather than `--color-semantic-error-2`.
 
   Usage: `clojure -M:dev:render-html [out-file]`
   (default `docs/samples/operator-console.html`)."
@@ -571,8 +577,42 @@
 ;; ----------------------------- document -----------------------------
 
 (def ^:private css "
-:root{--fg:#1a1a1c;--muted:#6b6f76;--line:#dfe3e8;--bg:#f6f7f9;--card:#fff;
-      --ok:#0b6b3a;--ok-bg:#e6f4ec;--warn:#8a5a00;--warn-bg:#fdf3e0;--bad:#9b1c1c;--bad-bg:#fdeaea;--accent:#123a6b}
+/* --- jp-go-dds (デジタル庁デザインシステム) primitives, inlined ---------------
+   ONLY the primitives this page actually references are copied here, with
+   their real values read from the local checkout
+   orgs/kotoba-lang/jp-go-digital-design-system/resources/jp_go_dds/dds.css.
+
+   The git dep is deliberately NOT added: it would make an offline
+   `clojure -M:dev:render-html` depend on dependency resolution this repo
+   does not otherwise need, and the pinned `tokens/bridge-css` bridges the
+   `--hig-*` contract, not the token names this console uses -- wiring it
+   naively would silently unstyle the page.
+
+   NOTE on the error ramp: `--color-semantic-error-1`/`-2` are red-800 and
+   red-900 -- BOTH dark, not a strong/weak pair. Tint backgrounds therefore
+   come from the `-50` step, never from `-2`. */
+:root{
+  --color-primitive-blue-900:#0017c1;
+  --color-primitive-green-50:#e6f5ec;  --color-primitive-green-800:#197a4b;
+  --color-primitive-orange-50:#ffeee2; --color-primitive-orange-800:#c74700;
+  --color-primitive-red-50:#fdeeee;    --color-primitive-red-900:#ce0000;
+  --color-neutral-white:#ffffff;
+  --color-neutral-solid-gray-50:#f2f2f2;  --color-neutral-solid-gray-100:#e6e6e6;
+  --color-neutral-solid-gray-200:#cccccc; --color-neutral-solid-gray-600:#666666;
+  --color-neutral-solid-gray-900:#1a1a1a;
+
+  /* page semantics mapped onto the primitives above */
+  --fg:var(--color-neutral-solid-gray-900);
+  --muted:var(--color-neutral-solid-gray-600);
+  --line:var(--color-neutral-solid-gray-200);
+  --line-soft:var(--color-neutral-solid-gray-100);
+  --bg:var(--color-neutral-solid-gray-50);
+  --card:var(--color-neutral-white);
+  --code-bg:var(--color-neutral-solid-gray-50);
+  --ok:var(--color-primitive-green-800);    --ok-bg:var(--color-primitive-green-50);
+  --warn:var(--color-primitive-orange-800); --warn-bg:var(--color-primitive-orange-50);
+  --bad:var(--color-primitive-red-900);     --bad-bg:var(--color-primitive-red-50);
+  --accent:var(--color-primitive-blue-900)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);
      font:15px/1.65 -apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP',sans-serif}
@@ -587,16 +627,16 @@ main{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;font-weight:600;color:var(--muted);border-bottom:2px solid var(--line);
    padding:7px 9px;white-space:nowrap}
-td{border-bottom:1px solid var(--line);padding:7px 9px;vertical-align:top}
+td{border-bottom:1px solid var(--line-soft);padding:7px 9px;vertical-align:top}
 tr:last-child td{border-bottom:none}
-code{font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#f0f2f5;
+code{font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--code-bg);
      border-radius:4px;padding:1px 5px}
 code.bad{background:var(--bad-bg);color:var(--bad)}
 .pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600;white-space:nowrap}
 .pill.ok{background:var(--ok-bg);color:var(--ok)}
 .pill.warn{background:var(--warn-bg);color:var(--warn)}
 .pill.bad{background:var(--bad-bg);color:var(--bad)}
-.pill.muted{background:#eef0f3;color:var(--muted)}
+.pill.muted{background:var(--color-neutral-solid-gray-100);color:var(--muted)}
 .muted{color:var(--muted)}
 .note{margin:14px 0 0;padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.7}
 .note-ok{background:var(--ok-bg);border-left:4px solid var(--ok)}
