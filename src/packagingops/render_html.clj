@@ -485,7 +485,7 @@
            (cond
              a (str (pill "ok" (esc (str (:value a)))) " <code>" (esc (:key a)) "</code>"
                     (when (nil? (approver-in (:value r)))
-                      (str " <span class=\"muted\">(<code>:value</code> 側には無い)</span>")))
+                      " <span class=\"muted\">(<code>:value</code> 側には無い)</span>"))
              decidable? "<span class=\"muted\">承認なし (自動コミット)</span>"
              :else (str (pill "warn" "判別不能")
                         " <span class=\"muted\">この実行では承認者の保持が不完全なため、"
