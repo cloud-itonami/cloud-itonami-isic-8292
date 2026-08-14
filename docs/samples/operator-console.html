@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>cloud-itonami-isic-8292 · packaging operations コンソール</title>
+<style>
+/* --- jp-go-dds (デジタル庁デザインシステム) primitives, inlined ---------------
+   ONLY the primitives this page actually references are copied here, with
+   their real values read from the local checkout
+   orgs/kotoba-lang/jp-go-digital-design-system/resources/jp_go_dds/dds.css.
+
+   The git dep is deliberately NOT added: it would make an offline
+   `clojure -M:dev:render-html` depend on dependency resolution this repo
+   does not otherwise need, and the pinned `tokens/bridge-css` bridges the
+   `--hig-*` contract, not the token names this console uses -- wiring it
+   naively would silently unstyle the page.
+
+   NOTE on the error ramp: `--color-semantic-error-1`/`-2` are red-800 and
+   red-900 -- BOTH dark, not a strong/weak pair. Tint backgrounds therefore
+   come from the `-50` step, never from `-2`. */
+:root{
+  --color-primitive-blue-900:#0017c1;
+  --color-primitive-green-50:#e6f5ec;  --color-primitive-green-800:#197a4b;
+  --color-primitive-orange-50:#ffeee2; --color-primitive-orange-800:#c74700;
+  --color-primitive-red-50:#fdeeee;    --color-primitive-red-900:#ce0000;
+  --color-neutral-white:#ffffff;
+  --color-neutral-solid-gray-50:#f2f2f2;  --color-neutral-solid-gray-100:#e6e6e6;
+  --color-neutral-solid-gray-200:#cccccc; --color-neutral-solid-gray-600:#666666;
+  --color-neutral-solid-gray-900:#1a1a1a;
+
+  /* page semantics mapped onto the primitives above */
+  --fg:var(--color-neutral-solid-gray-900);
+  --muted:var(--color-neutral-solid-gray-600);
+  --line:var(--color-neutral-solid-gray-200);
+  --line-soft:var(--color-neutral-solid-gray-100);
+  --bg:var(--color-neutral-solid-gray-50);
+  --card:var(--color-neutral-white);
+  --code-bg:var(--color-neutral-solid-gray-50);
+  --ok:var(--color-primitive-green-800);    --ok-bg:var(--color-primitive-green-50);
+  --warn:var(--color-primitive-orange-800); --warn-bg:var(--color-primitive-orange-50);
+  --bad:var(--color-primitive-red-900);     --bad-bg:var(--color-primitive-red-50);
+  --accent:var(--color-primitive-blue-900)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+     font:15px/1.65 -apple-system,BlinkMacSystemFont,'Hiragino Sans','Noto Sans JP',sans-serif}
+header.bar{background:var(--accent);color:#fff;padding:22px 28px}
+header.bar h1{margin:0 0 6px;font-size:20px;letter-spacing:.01em}
+header.bar .sub{opacity:.85;font-size:13px}
+main{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+      padding:20px 22px;margin:0 0 20px}
+.card h2{margin:0 0 6px;font-size:16px}
+.lede{margin:0 0 14px;color:var(--muted);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:600;color:var(--muted);border-bottom:2px solid var(--line);
+   padding:7px 9px;white-space:nowrap}
+td{border-bottom:1px solid var(--line-soft);padding:7px 9px;vertical-align:top}
+tr:last-child td{border-bottom:none}
+code{font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--code-bg);
+     border-radius:4px;padding:1px 5px}
+code.bad{background:var(--bad-bg);color:var(--bad)}
+.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.pill.muted{background:var(--color-neutral-solid-gray-100);color:var(--muted)}
+.muted{color:var(--muted)}
+.note{margin:14px 0 0;padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.7}
+.note-ok{background:var(--ok-bg);border-left:4px solid var(--ok)}
+.note-bad{background:var(--bad-bg);border-left:4px solid var(--bad)}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 20px;padding:0;list-style:none}
+.stats li{background:var(--card);border:1px solid var(--line);border-radius:10px;
+          padding:12px 16px;min-width:132px}
+.stats b{display:block;font-size:22px;line-height:1.2}
+.stats span{font-size:12px;color:var(--muted)}
+footer{max-width:1180px;margin:0 auto;padding:0 20px 40px;color:var(--muted);font-size:12px}
+</style></head>
+<body>
+<header class="bar">
+  <h1>ISIC 8292 包装業 (Packaging activities) — 運用コンソール</h1>
+  <div class="sub">read-only sample · 調整専用 (coordination only) · 包装完全性の安全確認と食品/医薬品表示の適合確定は永久にスコープ外</div>
+</header>
+<main>
+  <ul class="stats">
+    <li><b>16</b><span>調整リクエスト</span></li>
+    <li><b>6</b><span>コミット</span></li>
+    <li><b>8</b><span>HARD hold (governor)</span></li>
+    <li><b>1</b><span>phase gate hold</span></li>
+    <li><b>1</b><span>人間の却下</span></li>
+    <li><b>6</b><span>SSoT レコード</span></li>
+    <li><b>16</b><span>台帳ファクト</span></li>
+  </ul>
+  <section class="card">
+    <h2>調整リクエストの実行結果</h2>
+    <p class="lede">1 リクエスト = 1 回の監督付きアクター実行 (intake → advise → govern → decide → commit | hold | approval)。下の各行は <code>langgraph.graph/run*</code> の実行結果そのもので、confidence は PackagingOpsAdvisor が返した値、disposition は ContractPackagingGovernor と rollout phase gate が決めた値。</p>
+    <table>
+      <thead><tr><th>thread</th><th>シナリオ</th><th>op</th><th>施設 / 契約</th><th>phase</th><th>confidence</th><th>人間の判断</th><th>disposition</th><th>hold の根拠</th></tr></thead>
+      <tbody>
+        <tr><td><code>t01</code></td><td>生産記録ログ (phase 1 -- 常に人間承認)</td><td><code>:log-production-record</code></td><td>facility-1 / contract-1</td><td>1</td><td>0.92</td><td><span class="pill ok">approved · packaging-qa-coordinator-1</span></td><td><span class="pill ok">commit</span></td><td><span class="muted">—</span></td></tr>
+        <tr><td><code>t02</code></td><td>生産記録ログ (phase 3 -- 自動コミット)</td><td><code>:log-production-record</code></td><td>facility-1 / contract-1</td><td>3</td><td>0.92</td><td><span class="pill muted">—</span></td><td><span class="pill ok">commit</span></td><td><span class="muted">—</span></td></tr>
+        <tr><td><code>t03</code></td><td>梱包ライン/人員配置予定 (phase 3 -- 自動コミット)</td><td><code>:schedule-production-operation</code></td><td>facility-2 / contract-2</td><td>3</td><td>0.87</td><td><span class="pill muted">—</span></td><td><span class="pill ok">commit</span></td><td><span class="muted">—</span></td></tr>
+        <tr><td><code>t04</code></td><td>資材発注調整 -- 低額・検証済み仕入先 (自動コミット)</td><td><code>:coordinate-supply-order</code></td><td>facility-1 / contract-1</td><td>3</td><td>0.89</td><td><span class="pill muted">—</span></td><td><span class="pill ok">commit</span></td><td><span class="muted">—</span></td></tr>
+        <tr><td><code>t05</code></td><td>資材発注調整 -- 高額 (phase 3 でも常に人間承認)</td><td><code>:coordinate-supply-order</code></td><td>facility-1 / contract-1</td><td>3</td><td>0.89</td><td><span class="pill ok">approved · packaging-qa-coordinator-1</span></td><td><span class="pill ok">commit</span></td><td><span class="muted">—</span></td></tr>
+        <tr><td><code>t06</code></td><td>品質懸念フラグ (どの phase でも常に人間承認)</td><td><code>:flag-quality-concern</code></td><td>facility-2 / contract-2</td><td>3</td><td>0.91</td><td><span class="pill ok">approved · packaging-qa-coordinator-1</span></td><td><span class="pill ok">commit</span></td><td><span class="muted">—</span></td></tr>
+        <tr><td><code>t07</code></td><td>品質懸念フラグ -- 人間が却下</td><td><code>:flag-quality-concern</code></td><td>facility-1 / contract-1</td><td>3</td><td>0.88</td><td><span class="pill bad">rejected · packaging-qa-coordinator-1</span></td><td><span class="pill bad">HOLD</span></td><td><code class="bad">approver-rejected</code></td></tr>
+        <tr><td><code>t08</code></td><td>未登録の施設 -&gt; HARD hold</td><td><code>:log-production-record</code></td><td>facility-99 / contract-1</td><td>3</td><td>0.92</td><td><span class="pill muted">—</span></td><td><span class="pill bad">HOLD</span></td><td><code class="bad">facility-unverified</code></td></tr>
+        <tr><td><code>t09</code></td><td>登録済みだが未検証の施設 -&gt; HARD hold</td><td><code>:log-production-record</code></td><td>facility-3 / contract-1</td><td>3</td><td>0.92</td><td><span class="pill muted">—</span></td><td><span class="pill bad">HOLD</span></td><td><code class="bad">facility-unverified</code></td></tr>
+        <tr><td><code>t10</code></td><td>未検証の顧客契約 -&gt; HARD hold</td><td><code>:log-production-record</code></td><td>facility-1 / contract-3</td><td>3</td><td>0.92</td><td><span class="pill muted">—</span></td><td><span class="pill bad">HOLD</span></td><td><code class="bad">contract-unverified</code></td></tr>
+        <tr><td><code>t11</code></td><td>未検証の資材仕入先 -&gt; HARD hold</td><td><code>:coordinate-supply-order</code></td><td>facility-1 / contract-1</td><td>3</td><td>0.89</td><td><span class="pill muted">—</span></td><td><span class="pill bad">HOLD</span></td><td><code class="bad">supplier-unverified</code></td></tr>
+        <tr><td><code>t12</code></td><td>仕入先 ID を名指ししない発注調整 -&gt; HARD hold</td><td><code>:coordinate-supply-order</code></td><td>facility-1 / contract-1</td><td>3</td><td>0.89</td><td><span class="pill muted">—</span></td><td><span class="pill bad">HOLD</span></td><td><code class="bad">supplier-unverified</code></td></tr>
+        <tr><td><code>t13</code></td><td>advisor が直接作動を主張 (:effect :commit) -&gt; HARD hold</td><td><code>:schedule-production-operation</code></td><td>facility-1 / contract-1</td><td>3</td><td>0.87</td><td><span class="pill muted">—</span></td><td><span class="pill bad">HOLD</span></td><td><code class="bad">effect-not-propose</code></td></tr>
+        <tr><td><code>t14</code></td><td>advisor が完全性確認/表示適合確定の領域へ逸脱 -&gt; HARD hold (永久)</td><td><code>:log-production-record</code></td><td>facility-1 / contract-1</td><td>3</td><td>0.92</td><td><span class="pill muted">—</span></td><td><span class="pill bad">HOLD</span></td><td><code class="bad">scope-excluded</code></td></tr>
+        <tr><td><code>t15</code></td><td>advisor が allowlist 外の操作を提案 -&gt; HARD hold</td><td><code>:log-production-record</code></td><td>facility-1 / contract-1</td><td>3</td><td>0.92</td><td><span class="pill muted">—</span></td><td><span class="pill bad">HOLD</span></td><td><code class="bad">op-not-allowed</code></td></tr>
+        <tr><td><code>t16</code></td><td>phase 1 では未開放の発注調整 -&gt; phase gate が hold</td><td><code>:coordinate-supply-order</code></td><td>facility-1 / contract-1</td><td>1</td><td>0.89</td><td><span class="pill muted">—</span></td><td><span class="pill bad">HOLD</span></td><td><code class="bad">phase-disabled</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section class="card">
+    <h2>hold の内訳 (この実行で実際に発火した規則)</h2>
+    <p class="lede">HARD hold は ContractPackagingGovernor の永久ブロックで、人間承認でも上書きできない。phase gate hold は governor が clean と判定した提案を rollout phase が止めたもので、phase を前進させれば解除される — 台帳上はどちらも <code>:governor-hold</code> だが、<code>:violations</code> の有無で区別している。detail 列は governor 自身が返した文字列。</p>
+    <table>
+      <thead><tr><th>規則</th><th>種別</th><th>件数</th><th>op</th><th>governor の detail</th></tr></thead>
+      <tbody>
+        <tr><td><code class="bad">contract-unverified</code></td><td><span class="pill bad">HARD · 上書き不可</span></td><td>1</td><td>:log-production-record</td><td>contract-3 は未登録または未検証の顧客契約 -- いかなる提案も進められない</td></tr>
+        <tr><td><code class="bad">effect-not-propose</code></td><td><span class="pill bad">HARD · 上書き不可</span></td><td>1</td><td>:schedule-production-operation</td><td>:effect は :propose のみ許可されるが :commit が提案された</td></tr>
+        <tr><td><code class="bad">facility-unverified</code></td><td><span class="pill bad">HARD · 上書き不可</span></td><td>2</td><td>:log-production-record</td><td>facility-99 は未登録または未検証の施設 -- いかなる提案も進められない / facility-3 は未登録または未検証の施設 -- いかなる提案も進められない</td></tr>
+        <tr><td><code class="bad">op-not-allowed</code></td><td><span class="pill bad">HARD · 上書き不可</span></td><td>1</td><td>:log-production-record</td><td>:issue-package-integrity-clearance は許可された操作(closed allowlist)に含まれない</td></tr>
+        <tr><td><code class="bad">phase-disabled</code></td><td><span class="pill warn">phase gate · phase 前進で解除</span></td><td>1</td><td>:coordinate-supply-order</td><td>phase 1 (assisted-logging) はこの操作の書き込みをまだ開放していない</td></tr>
+        <tr><td><code class="bad">scope-excluded</code></td><td><span class="pill bad">HARD · 上書き不可</span></td><td>1</td><td>:log-production-record</td><td>パッケージ完全性安全確認または食品/医薬品表示適合確定行為(package-integrity-safety-clearance/food-pharma-labeling-compliance finalization)に触れる提案は永久に禁止</td></tr>
+        <tr><td><code class="bad">supplier-unverified</code></td><td><span class="pill bad">HARD · 上書き不可</span></td><td>2</td><td>:coordinate-supply-order</td><td>supplier-2 は未登録または未検証の資材仕入先 -- 発注調整提案を進められない / (supplier-id missing) は未登録または未検証の資材仕入先 -- 発注調整提案を進められない</td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section class="card">
+    <h2>包装施設ディレクトリ</h2>
+    <p class="lede"><code>packagingops.store/demo-data</code> を <code>Store</code> プロトコル経由で読み戻したもの。governor は提案の自己申告ではなくこのレコードから <code>:registered?</code>/<code>:verified?</code> を再導出する。</p>
+    <table>
+      <thead><tr><th>ID</th><th>name</th><th>registered?</th><th>verified?</th><th>提案を進められるか</th></tr></thead>
+      <tbody>
+        <tr><td><code>facility-1</code></td><td>Riverside Contract Packaging &amp; Co-Pack</td><td><span class="pill ok">yes</span></td><td><span class="pill ok">yes</span></td><td><span class="pill ok">yes</span></td></tr>
+        <tr><td><code>facility-2</code></td><td>Harborview Blister-Pack &amp; Bottling</td><td><span class="pill ok">yes</span></td><td><span class="pill ok">yes</span></td><td><span class="pill ok">yes</span></td></tr>
+        <tr><td><code>facility-3</code></td><td>Downtown Pop-Up Gift-Wrap Line (in intake)</td><td><span class="pill ok">yes</span></td><td><span class="pill bad">NO</span></td><td><span class="pill bad">no · HARD hold</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section class="card">
+    <h2>顧客包装受託契約ディレクトリ</h2>
+    <p class="lede">受託包装は必ず特定の顧客契約の下で行われる。契約が未検証なら、施設がどれだけ健全でも全 op が HARD hold になる。</p>
+    <table>
+      <thead><tr><th>ID</th><th>client</th><th>registered?</th><th>verified?</th><th>提案を進められるか</th></tr></thead>
+      <tbody>
+        <tr><td><code>contract-1</code></td><td>Northbridge Foods Co.</td><td><span class="pill ok">yes</span></td><td><span class="pill ok">yes</span></td><td><span class="pill ok">yes</span></td></tr>
+        <tr><td><code>contract-2</code></td><td>Meridian Pharma Distribution</td><td><span class="pill ok">yes</span></td><td><span class="pill ok">yes</span></td><td><span class="pill ok">yes</span></td></tr>
+        <tr><td><code>contract-3</code></td><td>Unverified Startup Beverage Brand</td><td><span class="pill ok">yes</span></td><td><span class="pill bad">NO</span></td><td><span class="pill bad">no · HARD hold</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section class="card">
+    <h2>包装資材仕入先ディレクトリ</h2>
+    <p class="lede"><code>:coordinate-supply-order</code> のみが仕入先を名指しする。名指しが無い場合も未検証の場合と同じく HARD hold。</p>
+    <table>
+      <thead><tr><th>ID</th><th>name</th><th>registered?</th><th>verified?</th><th>提案を進められるか</th></tr></thead>
+      <tbody>
+        <tr><td><code>supplier-1</code></td><td>Cascade Packaging Materials Supply</td><td><span class="pill ok">yes</span></td><td><span class="pill ok">yes</span></td><td><span class="pill ok">yes</span></td></tr>
+        <tr><td><code>supplier-2</code></td><td>Unverified Import Carton Broker Co.</td><td><span class="pill ok">yes</span></td><td><span class="pill bad">NO</span></td><td><span class="pill bad">no · HARD hold</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section class="card">
+    <h2>コミット済み調整ログ (SSoT)</h2>
+    <p class="lede"><code>commit</code> ノードだけが書き込む。承認者列は、レコードを承認者キーについて走査した実測結果 (下の節を参照)。</p>
+    <table>
+      <thead><tr><th>op</th><th>施設 / 契約</th><th>value</th><th>承認者</th></tr></thead>
+      <tbody>
+        <tr><td><code>:log-production-record</code></td><td>facility-1 / contract-1</td><td>batch-id=b-2001 · contract-id=contract-1 · facility-id=facility-1 · rejected-units=12 · units-packaged=5000</td><td><span class="pill ok">packaging-qa-coordinator-1</span> <code>:approved-by</code> <span class="muted">(<code>:value</code> 側には無い)</span></td></tr>
+        <tr><td><code>:log-production-record</code></td><td>facility-1 / contract-1</td><td>batch-id=b-2002 · contract-id=contract-1 · facility-id=facility-1 · rejected-units=4 · units-packaged=4800</td><td><span class="muted">承認なし (自動コミット)</span></td></tr>
+        <tr><td><code>:schedule-production-operation</code></td><td>facility-2 / contract-2</td><td>contract-id=contract-2 · date=2026-07-20 · facility-id=facility-2 · line=blister-line-2 · window=06:00-14:00</td><td><span class="muted">承認なし (自動コミット)</span></td></tr>
+        <tr><td><code>:coordinate-supply-order</code></td><td>facility-1 / contract-1</td><td>contract-id=contract-1 · estimated-cost=650.0 · facility-id=facility-1 · item=tamper-evident cap seals restock · quantity=20000 · supplier-id=supplier-1</td><td><span class="muted">承認なし (自動コミット)</span></td></tr>
+        <tr><td><code>:coordinate-supply-order</code></td><td>facility-1 / contract-1</td><td>contract-id=contract-1 · estimated-cost=8500.0 · facility-id=facility-1 · item=blister-pack tooling changeover kit · quantity=4 · supplier-id=supplier-1</td><td><span class="pill ok">packaging-qa-coordinator-1</span> <code>:approved-by</code> <span class="muted">(<code>:value</code> 側には無い)</span></td></tr>
+        <tr><td><code>:flag-quality-concern</code></td><td>facility-2 / contract-2</td><td>concern=tamper-evident seal appears compromised on a sample from batch b-2002, cap torque reading below threshold · confidence=0.91 · contract-id=contract-2 · facility-id=facility-2</td><td><span class="pill ok">packaging-qa-coordinator-1</span> <code>:approved-by</code> <span class="muted">(<code>:value</code> 側には無い)</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section class="card">
+    <h2>監査台帳 (追記専用)</h2>
+    <p class="lede">この実行が生成した全ての決定ファクト。commit も hold も却下も同じ台帳に残る。</p>
+    <table>
+      <thead><tr><th>ファクト</th><th>op</th><th>actor</th><th>施設 / 契約</th><th>basis</th><th>summary</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill ok">committed</span></td><td><code>:log-production-record</code></td><td>coord-1</td><td>facility-1 / contract-1</td><td>facility-1, contract-1</td><td>facility-1 の生産バッチ/ラン/数量記録を記録: (:batch-id :units-packaged :rejected-units)</td></tr>
+        <tr><td><span class="pill ok">committed</span></td><td><code>:log-production-record</code></td><td>coord-1</td><td>facility-1 / contract-1</td><td>facility-1, contract-1</td><td>facility-1 の生産バッチ/ラン/数量記録を記録: (:batch-id :units-packaged :rejected-units)</td></tr>
+        <tr><td><span class="pill ok">committed</span></td><td><code>:schedule-production-operation</code></td><td>coord-1</td><td>facility-2 / contract-2</td><td>facility-2, contract-2</td><td>facility-2 の梱包ライン/人員配置予定を提案: (:line :date :window)</td></tr>
+        <tr><td><span class="pill ok">committed</span></td><td><code>:coordinate-supply-order</code></td><td>coord-1</td><td>facility-1 / contract-1</td><td>facility-1, contract-1</td><td>facility-1 向け包装資材の発注調整を提案: (:item :quantity :estimated-cost :supplier-id)</td></tr>
+        <tr><td><span class="pill ok">committed</span></td><td><code>:coordinate-supply-order</code></td><td>coord-1</td><td>facility-1 / contract-1</td><td>facility-1, contract-1</td><td>facility-1 向け包装資材の発注調整を提案: (:item :quantity :estimated-cost :supplier-id)</td></tr>
+        <tr><td><span class="pill ok">committed</span></td><td><code>:flag-quality-concern</code></td><td>coord-1</td><td>facility-2 / contract-2</td><td>facility-2, contract-2</td><td>facility-2 のパッケージ完全性/表示正確性/混入懸念フラグ: &quot;tamper-evident seal appears compromised on a sample from batch b-2002, cap torque reading below threshold&quot;</td></tr>
+        <tr><td><span class="pill bad">approval-rejected</span></td><td><code>:flag-quality-concern</code></td><td>coord-1</td><td>facility-1 / contract-1</td><td>approver-rejected</td><td></td></tr>
+        <tr><td><span class="pill bad">governor-hold</span></td><td><code>:log-production-record</code></td><td>coord-1</td><td>facility-99 / contract-1</td><td>facility-unverified</td><td></td></tr>
+        <tr><td><span class="pill bad">governor-hold</span></td><td><code>:log-production-record</code></td><td>coord-1</td><td>facility-3 / contract-1</td><td>facility-unverified</td><td></td></tr>
+        <tr><td><span class="pill bad">governor-hold</span></td><td><code>:log-production-record</code></td><td>coord-1</td><td>facility-1 / contract-3</td><td>contract-unverified</td><td></td></tr>
+        <tr><td><span class="pill bad">governor-hold</span></td><td><code>:coordinate-supply-order</code></td><td>coord-1</td><td>facility-1 / contract-1</td><td>supplier-unverified</td><td></td></tr>
+        <tr><td><span class="pill bad">governor-hold</span></td><td><code>:coordinate-supply-order</code></td><td>coord-1</td><td>facility-1 / contract-1</td><td>supplier-unverified</td><td></td></tr>
+        <tr><td><span class="pill bad">governor-hold</span></td><td><code>:schedule-production-operation</code></td><td>coord-1</td><td>facility-1 / contract-1</td><td>effect-not-propose</td><td></td></tr>
+        <tr><td><span class="pill bad">governor-hold</span></td><td><code>:log-production-record</code></td><td>coord-1</td><td>facility-1 / contract-1</td><td>scope-excluded</td><td></td></tr>
+        <tr><td><span class="pill bad">governor-hold</span></td><td><code>:log-production-record</code></td><td>coord-1</td><td>facility-1 / contract-1</td><td>op-not-allowed</td><td></td></tr>
+        <tr><td><span class="pill bad">governor-hold</span></td><td><code>:coordinate-supply-order</code></td><td>coord-1</td><td>facility-1 / contract-1</td><td><span class="muted">—</span></td><td></td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section class="card">
+    <h2>Governor / phase 契約</h2>
+    <p class="lede">この表は <code>packagingops.governor/allowed-ops</code>、<code>always-escalate-ops</code>、<code>packagingops.phase/phases</code> からレンダリング時に導出している (手書きの複製ではない)。</p>
+    <table>
+      <thead><tr><th>op</th><th>phase 3 での扱い</th><th>書き込みが開放される phase</th><th>追加のエスカレーション条件</th></tr></thead>
+      <tbody>
+        <tr><td><code>:coordinate-supply-order</code></td><td><span class="pill ok">phase 3 で自動コミット可</span></td><td>2 assisted-coordination, 3 supervised-auto</td><td>estimated-cost &gt; 2000.0 は常にエスカレート</td></tr>
+        <tr><td><code>:flag-quality-concern</code></td><td><span class="pill warn">常に人間承認</span></td><td>3 supervised-auto</td><td><span class="muted">—</span></td></tr>
+        <tr><td><code>:log-production-record</code></td><td><span class="pill ok">phase 3 で自動コミット可</span></td><td>1 assisted-logging, 2 assisted-coordination, 3 supervised-auto</td><td><span class="muted">—</span></td></tr>
+        <tr><td><code>:schedule-production-operation</code></td><td><span class="pill ok">phase 3 で自動コミット可</span></td><td>2 assisted-coordination, 3 supervised-auto</td><td><span class="muted">—</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section class="card">
+    <h2>承認者の帰属 (この実行で実測)</h2>
+    <p class="lede">この節は固定文ではない — レンダリング時に、コミット済みレコードを承認者キーについて実際に走査した結果から導出している。ストアの挙動が変われば、この文も変わる。</p>
+    <table>
+      <thead><tr><th>測定項目</th><th>実測値</th></tr></thead>
+      <tbody>
+        <tr><td>グラフが実際に付与した承認 (<code>:approval-granted</code>)</td><td>3</td></tr>
+        <tr><td>SSoT に書かれたコミット済みレコード</td><td>6</td></tr>
+        <tr><td>承認者を保持しているレコード</td><td>3</td></tr>
+        <tr><td>承認者が入っていたキー</td><td><code>:approved-by</code></td></tr>
+        <tr><td>うち <code>:value</code> からは辿れないレコード</td><td>3</td></tr>
+        <tr><td>監査台帳に残った <code>:approval-granted</code> ファクト</td><td>0</td></tr>
+      </tbody>
+    </table>
+    <p class="note note-ok">測定結果: このリポジトリのストアは<strong>承認者を保持している</strong>。3 件の承認すべてについて、コミット済みレコードから「誰が承認したか」を答えられる(<code>commit-record!</code> がレコード全体を保持しており、:approved-by がそのまま残る)。 ただしその 3 件すべてで、承認者はレコードの <code>:payload</code> にしか無い — <code>:value</code> は同じ形をしていながら承認者を含まない。<code>commit-record</code> は <code>:value</code> を <code>(or (:value proposal) {})</code> で常に埋める一方、承認者は <code>:request-approval</code> ノードが <code>:payload</code> 側にだけ <code>assoc</code> するため、<code>:value</code> だけを読む利用者は承認済みレコードを未承認と誤読する。上の表の承認者列がこの走査に依存しており、<code>:value</code> を直接読んでいないのはそのため。 ただし追記専用の監査台帳には <code>:approval-granted</code> ファクトが 1 件も書かれていない — 承認の事実は <code>packagingops.operation</code> のグラフ状態には存在するが、<code>:commit</code> ノードは <code>commit-fact</code> しか台帳に追記しないため、台帳だけを読んでも承認者は分からない。答えはレコード側にのみ在る。</p>
+  </section>
+</main>
+<footer>
+  build-time generated by <code>packagingops.render-html</code> (<code>clojure -M:dev:render-html</code>) — 実際の actor stack を実行した出力であり、手書きの表ではない。ページ内に時刻を持たないため、同じ seed に対して再実行しても byte 単位で同一。
+</footer>
+</body></html>
