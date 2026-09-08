@@ -43,7 +43,7 @@
   Usage: `clojure -M:dev:render-html [out-file]`
   (default `docs/samples/operator-console.html`)."
   (:require [clojure.java.io :as io]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [langgraph.graph :as g]
             [packagingops.advisor :as advisor]
             [packagingops.governor :as governor]
@@ -367,7 +367,7 @@
            ["ID" label-key "registered?" "verified?" "提案を進められるか"]
            (for [r records]
              (row (kw (id-key r))
-                  (esc (get r (keyword (str/lower-case label-key))
+                  (esc (get r (keyword (str/lower label-key))
                             (or (:name r) (:client r))))
                   (yes-no (:registered? r))
                   (yes-no (:verified? r))
