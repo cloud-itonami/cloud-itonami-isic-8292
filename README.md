@@ -186,14 +186,14 @@ clojure -M:run
 
 ### Test suite
 
-- `test/packagingops/governor_test.clj` -- unit tests of governor hard
+- `test/packagingops/governor_test.kotoba` -- unit tests of governor hard
   checks, scope exclusion, and the self-trip regression test
-- `test/packagingops/advisor_test.clj` -- advisor proposal shape and
+- `test/packagingops/advisor_test.kotoba` -- advisor proposal shape and
   consistency
-- `test/packagingops/phase_test.clj` -- rollout phase logic
-- `test/packagingops/governor_contract_test.clj` -- full graph
+- `test/packagingops/phase_test.kotoba` -- rollout phase logic
+- `test/packagingops/governor_contract_test.kotoba` -- full graph
   integration, audit trail
-- `test/packagingops/store_contract_test.clj` -- Store protocol and
+- `test/packagingops/store_contract_test.kotoba` -- Store protocol and
   MemStore implementation
 
 ### Modules
