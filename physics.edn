@@ -1,0 +1,33 @@
+;; What this vertical's robot physically does, declared for
+;; kotoba.robotics.process (kotoba-lang/robotics). `kbb -M:dev:physics` runs it.
+;;
+;; README "Robotics premise": robots may do bottle/blister-pack loading,
+;; label application, cartoning and palletizing for a contract packager
+;; (ISIC 8292), with this actor as the coordination layer. The physical work
+;; declared here: palletizing finished shipper cases at the end of the line,
+;; and transferring a client's bulk liquid product (from water-thin to
+;; shampoo-thick) from the bulk tote to the bottle filler.
+;;
+;; Every number without a cited source is marked `estimate` in its :basis.
+;; Replacing an estimate with a sourced value is this bot's growth work.
+{:physics/schema "itonami.physical-ai.spec.v1"
+ :repo "cloud-itonami/cloud-itonami-isic-8292"
+ :cases
+ [{:id :palletize-shipper-case
+   :kind :manipulator
+   :procedure "palletizing arm lifts a finished shipper case from the end-of-line conveyor onto the top layer of the pallet"
+   :params {:l1-m 0.80 :l2-m 0.70 :m1-kg 12.0 :m2-kg 8.0
+            :from [0.90 0.00] :to [0.50 0.90] :duration-s 2.5 :steps 500}
+   :sweep {:param :payload-kg :values [4.0 8.0 12.0 16.0 20.0]}
+   :quantity :peak-tau1-nm
+   :limit {:max 350.0 :basis "estimate: continuous shoulder torque of a 20-25 kg payload class palletizing arm"}
+   :boundary {:lo 1.0 :hi 60.0}}
+  {:id :bulk-tote-to-filler-line
+   :kind :pipe-flow
+   :procedure "transfer pump moves the client's bulk liquid product at 0.5 L/s from the bulk tote through a 10 m, 38 mm sanitary line up 1.5 m to the filler bowl"
+   :params {:q-m3s 5.0e-4 :diameter-m 0.038 :length-m 10.0 :roughness-m 1.0e-6 :density-kg-m3 1020.0
+            :pump-efficiency 0.50 :elevation-m 1.5}
+   :sweep {:param :viscosity-pa-s :values [0.001 0.1 0.5 1.0 2.0 3.0]}
+   :quantity :pressure-drop-pa
+   :limit {:max 200000.0 :basis "estimate: usable discharge pressure of the line's air-operated diaphragm transfer pump at this flow"}
+   :boundary {:lo 0.0005 :hi 5.0}}]}
